@@ -1,12 +1,13 @@
 from flask import Flask, request, jsonify
 from tensorflow.keras.models import load_model
+import joblib
 import numpy as np
 from PIL import Image
 import io
 
 # Load model and class mapping
-model = load_model("models/disease_model.h5")
-class_names = np.load("models/class_names.npy", allow_pickle=True)
+model = load_model("Image_model/models/disease_model.h5")
+class_names = np.load("Image_model/models/class_names.npy", allow_pickle=True)
 
 TARGET_SIZE = (160, 160)
 
@@ -35,5 +36,27 @@ def predict():
 def health():
     return "Model prediction API is running."
 
+
+model = joblib.load('.pkl')
+
+@app.route('/predict', methods=['POST'])
+def predict():
+    # Expect JSON with N, P, K, temperature, humidity, ph, rainfall
+    data = request.json
+    features = [
+        data['N'],
+        data['P'],
+        data['K'],
+        data['temperature'],
+        data['humidity'],
+        data['ph'],
+        data['rainfall']
+    ]
+    pred = model.predict([features])[0]
+    return jsonify({ 'recommended_crop': pred })
+
+
 if __name__ == "__main__":
     app.run(debug=True)
+
+
